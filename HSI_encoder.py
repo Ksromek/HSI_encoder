@@ -2,8 +2,9 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import json
 
-file_path = r"C:\Users\Kamil\Desktop\ZBD\HSI_nowe\badanie1.HSI"
+file_path = r"D:\Bazy\Nowe_dane\01.HSI"
 
 filename = os.path.basename(file_path)
 base_name = os.path.splitext(filename)[0]
@@ -53,13 +54,35 @@ try:
     )
 
     spectrum_df = pd.DataFrame({
-        "pixel_label": [pixel_label] * bands,
+        "file": filename,
         "pixel_x": [pixel_x_axis] * bands,
         "pixel_y": [pixel_y_axis] * bands,
         "band": np.arange(bands),
         "intensity": pixel_spectrum
     })
     spectrum_df.to_csv(spectrum_csv_path, index=False)
+
+        # Zapis widma także do JSON
+    spectrum_json_path = os.path.join(
+        output_dir,
+        f"{base_name}_{pixel_x_axis}_{pixel_y_axis}_spectrum.json"
+    )
+
+    # Przygotowanie struktury JSON: metadane + lista pasm
+    spectrum_json = {
+        "file": filename,
+        "pixel_x": int(pixel_x_axis),
+        "pixel_y": int(pixel_y_axis),
+        "bands_count": int(bands),
+        "bands": [
+            {"band": int(b), "intensity": int(v)}
+            for b, v in enumerate(pixel_spectrum.tolist())
+        ]
+    }
+
+    # Zapis do pliku (UTF-8, ładne formatowanie)
+    with open(spectrum_json_path, "w", encoding="utf-8") as jf:
+        json.dump(spectrum_json, jf, ensure_ascii=False, indent=2)
 
     # Wykres widma
     plt.figure()
@@ -81,6 +104,7 @@ try:
 
     print(f"Zapisano wykresy do:\n- {band_plot_path}\n- {spectrum_plot_path}")
     print(f"Zapisano CSV do:\n- {spectrum_csv_path}")
+    print(f"Zapisano JSON do:\n- {spectrum_json_path}")
 
 except ValueError as e:
     print(f"Błąd kształtu: Prawdopodobnie offset lub wymiary są nieco inne. Szczegóły: {e}")
