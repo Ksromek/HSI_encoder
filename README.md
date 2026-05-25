@@ -64,13 +64,13 @@ Default folder: `plots` next to the input file.
 ```json
 {
   "file": "<filename>",
-  "band_index": <int>,
-  "width": <int>,
-  "height": <int>,
+  "band_index": "<int>",
+  "width": "<int>",
+  "height": "<int>",
   "indexing": "0-based",
   "rows": [
-    {"y": 0, "pixels": [<int>, <int>, <int>, ...]},
-    {"y": 1, "pixels": [<int>, <int>, <int>, ...]}
+    {"y": 0, "pixels": ["<int>", "<int>", "<int>", "..."]},
+    {"y": 1, "pixels": ["<int>", "<int>", "<int>", "..."]}
   ]
 }
 ```
@@ -79,13 +79,13 @@ Default folder: `plots` next to the input file.
 ```json
 {
   "file": "<filename>",
-  "pixel_x": <int>,
-  "pixel_y": <int>,
-  "bands_count": <int>,
+  "pixel_x": "<int>",
+  "pixel_y": "<int>",
+  "bands_count": "<int>",
   "bands": [
-    {"band": 0, "intensity": <int>},
-    {"band": 1, "intensity": <int>},
-    ...
+    {"band": 0, "intensity": "<int>"},
+    {"band": 1, "intensity": "<int>"},
+    "..."
   ]
 }
 ```
