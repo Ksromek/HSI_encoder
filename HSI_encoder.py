@@ -41,6 +41,26 @@ try:
 
     band_plot_path = os.path.join(output_dir, f"{base_name}_band_{band_index}.png")
     plt.savefig(band_plot_path, dpi=300, bbox_inches='tight')
+
+    # Zapis danych pasma do JSON:
+    band_image = hsi_cube[band_index, :, :].astype(int)  # shape (height, width)
+    band_json_path = os.path.join(output_dir, f"{base_name}_band_{band_index}.json")
+
+    height, width = band_image.shape
+    rows = [{"y": int(y), "pixels": band_image[y, :].tolist()} for y in range(height)]
+
+    band_payload = {
+        "file": filename,
+        "band_index": int(band_index),
+        "width": int(width),
+        "height": int(height),
+        "indexing": "0-based",
+        "rows": rows
+    }
+
+    with open(band_json_path, "w", encoding="utf-8") as bf:
+        json.dump(band_payload, bf, ensure_ascii=False, indent=2)
+
     plt.show()
 
     # Wyciągnięcie widma dla przykładowego piksela
