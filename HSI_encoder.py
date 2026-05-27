@@ -1,132 +1,142 @@
+import argparse
 import os
-import numpy as np
+
 import matplotlib.pyplot as plt
-import pandas as pd
-import json
 
-file_path = r"D:\Bazy\Nowe_dane\01.HSI"
+from config import (
+    band_index as cfg_band_index,
+    bands as cfg_bands,
+    file_path as cfg_file_path,
+    header_offset as cfg_header_offset,
+    height as cfg_height,
+    pixel_x_axis as cfg_pixel_x_axis,
+    pixel_y_axis as cfg_pixel_y_axis,
+    width as cfg_width,
+)
+from hsi_export import export_band_json, export_spectrum_files
+from hsi_io import load_hsi_cube, prepare_output_dir, validate_indices
+from hsi_plot import create_band_figure, create_spectrum_figure
 
-filename = os.path.basename(file_path)
-base_name = os.path.splitext(filename)[0]
-output_dir = os.path.join(os.path.dirname(file_path), "plots")
-os.makedirs(output_dir, exist_ok=True)
 
-# Wyliczone parametry
-bands = 151
-height =750
-width = 1000
-header_offset = 8
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Read BSQ .HSI file, visualize a band and export pixel spectrum."
+    )
+    parser.add_argument("--file-path", default=cfg_file_path, help="Path to .HSI file")
+    parser.add_argument("--bands", type=int, default=cfg_bands, help="Number of bands")
+    parser.add_argument("--height", type=int, default=cfg_height, help="Image height")
+    parser.add_argument("--width", type=int, default=cfg_width, help="Image width")
+    parser.add_argument(
+        "--header-offset",
+        type=int,
+        default=cfg_header_offset,
+        help="Header offset in bytes",
+    )
+    parser.add_argument(
+        "--band-index",
+        type=int,
+        default=cfg_band_index,
+        help="Band index to visualize/export",
+    )
+    parser.add_argument(
+        "--pixel-x",
+        type=int,
+        default=cfg_pixel_x_axis,
+        help="Pixel X coordinate",
+    )
+    parser.add_argument(
+        "--pixel-y",
+        type=int,
+        default=cfg_pixel_y_axis,
+        help="Pixel Y coordinate",
+    )
+    parser.add_argument(
+        "--no-display",
+        action="store_true",
+        help="Do not show matplotlib windows",
+    )
+    return parser.parse_args()
 
-pixel_x_axis = 500
-pixel_y_axis = 750
-band_index = 100
 
-try:
-    # Wczytujemy cały plik prosto do RAMu
-    with open(file_path, 'rb') as f:
-        f.seek(header_offset)  # Przeskakujemy 8-bajtowy nagłówek
+def run_pipeline(
+    file_path,
+    bands,
+    height,
+    width,
+    header_offset,
+    band_index,
+    pixel_x_axis,
+    pixel_y_axis,
+    no_display=False,
+):
+    filename, base_name, output_dir = prepare_output_dir(file_path)
 
-        # Czytamy resztę jako ciąg wartości 8-bitowych
-        raw_data = np.fromfile(f, dtype=np.uint8)
+    validate_indices(
+        band_index=band_index,
+        pixel_x=pixel_x_axis,
+        pixel_y=pixel_y_axis,
+        bands=bands,
+        width=width,
+        height=height,
+    )
 
-        # Nadajemy ciągowi danych odpowiedni kształt 3D (BSQ)
-        hsi_cube = raw_data.reshape((bands, height, width))
+    hsi_cube = load_hsi_cube(file_path, bands, height, width, header_offset)
 
-    # Wyświetlamy pasmo
-    plt.figure()
-    plt.imshow(hsi_cube[band_index, :, :], cmap='gray')
-    plt.title(f"Zdekodowany obraz (pasmo {band_index}) | Plik: {filename}")
-    plt.colorbar(label='Intensywność (0-255)')
-    plt.tight_layout()
-
+    band_image, band_json_path = export_band_json(
+        hsi_cube, band_index, filename, base_name, output_dir
+    )
+    band_fig = create_band_figure(band_image, band_index, filename)
     band_plot_path = os.path.join(output_dir, f"{base_name}_band_{band_index}.png")
-    plt.savefig(band_plot_path, dpi=300, bbox_inches='tight')
+    band_fig.savefig(band_plot_path, dpi=300, bbox_inches="tight")
 
-    # Zapis danych pasma do JSON:
-    band_image = hsi_cube[band_index, :, :].astype(int)  # shape (height, width)
-    band_json_path = os.path.join(output_dir, f"{base_name}_band_{band_index}.json")
-
-    height, width = band_image.shape
-    rows = [{"y": int(y), "pixels": band_image[y, :].tolist()} for y in range(height)]
-
-    band_payload = {
-        "file": filename,
-        "band_index": int(band_index),
-        "width": int(width),
-        "height": int(height),
-        "indexing": "0-based",
-        "rows": rows
-    }
-
-    with open(band_json_path, "w", encoding="utf-8") as bf:
-        json.dump(band_payload, bf, ensure_ascii=False, indent=2)
-
-    plt.show()
-
-    # Wyciągnięcie widma dla przykładowego piksela
-    pixel_spectrum = hsi_cube[:, pixel_x_axis, pixel_y_axis]
+    pixel_spectrum = hsi_cube[:, pixel_y_axis, pixel_x_axis]
     pixel_label = f"pixel_X{pixel_x_axis}_Y{pixel_y_axis}"
 
-    # Zapis widma do CSV
-    spectrum_csv_path = os.path.join(
+    spectrum_csv_path, spectrum_json_path = export_spectrum_files(
+        pixel_spectrum,
+        bands,
+        pixel_x_axis,
+        pixel_y_axis,
+        filename,
+        base_name,
         output_dir,
-        f"{base_name}_{pixel_x_axis}_{pixel_y_axis}_spectrum.csv"
     )
-
-    spectrum_df = pd.DataFrame({
-        "file": filename,
-        "pixel_x": [pixel_x_axis] * bands,
-        "pixel_y": [pixel_y_axis] * bands,
-        "band": np.arange(bands),
-        "intensity": pixel_spectrum
-    })
-    spectrum_df.to_csv(spectrum_csv_path, index=False)
-
-        # Zapis widma także do JSON
-    spectrum_json_path = os.path.join(
-        output_dir,
-        f"{base_name}_{pixel_x_axis}_{pixel_y_axis}_spectrum.json"
-    )
-
-    # Przygotowanie struktury JSON: metadane + lista pasm
-    spectrum_json = {
-        "file": filename,
-        "pixel_x": int(pixel_x_axis),
-        "pixel_y": int(pixel_y_axis),
-        "bands_count": int(bands),
-        "bands": [
-            {"band": int(b), "intensity": int(v)}
-            for b, v in enumerate(pixel_spectrum.tolist())
-        ]
-    }
-
-    # Zapis do pliku (UTF-8, ładne formatowanie)
-    with open(spectrum_json_path, "w", encoding="utf-8") as jf:
-        json.dump(spectrum_json, jf, ensure_ascii=False, indent=2)
-
-    # Wykres widma
-    plt.figure()
-    plt.plot(pixel_spectrum)
-    plt.title(
-        f"Profil widmowy pojedynczego piksela ({pixel_label}) | Plik: {filename}"
-    )
-    plt.xlabel("Numer pasma (0-150)")
-    plt.ylabel("Intensywność (8-bit)")
-    plt.grid(True)
-    plt.tight_layout()
-
+    spectrum_fig = create_spectrum_figure(pixel_spectrum, pixel_label, filename, bands)
     spectrum_plot_path = os.path.join(
-        output_dir,
-        f"{base_name}_{pixel_x_axis}_{pixel_y_axis}_spectrum.png"
+        output_dir, f"{base_name}_{pixel_x_axis}_{pixel_y_axis}_spectrum.png"
     )
-    plt.savefig(spectrum_plot_path, dpi=300, bbox_inches='tight')
-    plt.show()
+    spectrum_fig.savefig(spectrum_plot_path, dpi=300, bbox_inches="tight")
+
+    if no_display:
+        plt.close("all")
+    else:
+        plt.show()
 
     print(f"Zapisano wykresy do:\n- {band_plot_path}\n- {spectrum_plot_path}")
     print(f"Zapisano CSV do:\n- {spectrum_csv_path}")
     print(f"Zapisano JSON do:\n- {spectrum_json_path}")
+    print(f"Zapisano JSON pasma do:\n- {band_json_path}")
 
-except ValueError as e:
-    print(f"Błąd kształtu: Prawdopodobnie offset lub wymiary są nieco inne. Szczegóły: {e}")
-except Exception as e:
-    print(f"Inny błąd podczas dekodowania: {e}")
+
+def main():
+    args = parse_args()
+    run_pipeline(
+        file_path=args.file_path,
+        bands=args.bands,
+        height=args.height,
+        width=args.width,
+        header_offset=args.header_offset,
+        band_index=args.band_index,
+        pixel_x_axis=args.pixel_x,
+        pixel_y_axis=args.pixel_y,
+        no_display=args.no_display,
+    )
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except ValueError as e:
+        print(f"Błąd: {e}")
+    except Exception as e:
+        print(f"Inny błąd podczas dekodowania: {e}")
