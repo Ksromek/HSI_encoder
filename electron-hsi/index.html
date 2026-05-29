@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HSI Encoder</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">▦</span>
+        <div>
+          <h1>HSI Encoder</h1>
+          <p>Wizualizacja i eksport kostek hiperspektralnych .HSI</p>
+        </div>
+      </div>
+      <div id="filePill" class="file-pill">Nie wczytano pliku</div>
+    </header>
+
+    <main class="layout">
+      <!-- ============ PANEL STEROWANIA ============ -->
+      <aside class="sidebar">
+        <section class="card">
+          <h2>Plik wejściowy</h2>
+          <div class="file-row">
+            <button id="btnPickHsi" class="btn btn-ghost">Wybierz plik .HSI…</button>
+          </div>
+          <p id="filePath" class="path muted">brak</p>
+        </section>
+
+        <section class="card">
+          <h2>Parametry kostki</h2>
+          <div class="grid2">
+            <label>Liczba pasm
+              <input id="bands" type="number" min="1" value="151" />
+            </label>
+            <label>Header offset
+              <input id="headerOffset" type="number" min="0" value="8" />
+            </label>
+            <label>Wysokość
+              <input id="height" type="number" min="1" value="750" />
+            </label>
+            <label>Szerokość
+              <input id="width" type="number" min="1" value="1000" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Wybór danych</h2>
+          <label class="full">Indeks pasma
+            <input id="bandIndex" type="number" min="0" value="100" />
+          </label>
+          <div class="grid2">
+            <label>Piksel X
+              <input id="pixelX" type="number" min="0" value="500" />
+            </label>
+            <label>Piksel Y
+              <input id="pixelY" type="number" min="0" value="100" />
+            </label>
+          </div>
+        </section>
+
+        <button id="btnRun" class="btn btn-primary full">Uruchom</button>
+      </aside>
+
+      <!-- ============ OBSZAR WYNIKÓW ============ -->
+      <section class="content">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Obraz pasma</h2>
+            <span id="bandMeta" class="meta muted">-</span>
+          </div>
+          <div class="img-wrap">
+            <img id="bandImg" class="result" alt="Obraz pasma" />
+            <p id="bandPlaceholder" class="placeholder">Wybierz plik i kliknij „Uruchom”.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Profil widmowy piksela</h2>
+            <span id="specMeta" class="meta muted">-</span>
+          </div>
+          <div class="img-wrap">
+            <img id="specImg" class="result" alt="Profil widmowy" />
+            <p id="specPlaceholder" class="placeholder">Profil widmowy pojawi się po uruchomieniu.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Zapisane pliki</h2>
+            <button id="btnOpenDir" class="btn btn-ghost mini" disabled>Otwórz folder „plots”</button>
+          </div>
+          <ul id="fileList" class="files">
+            <li class="muted">Brak - uruchom przetwarzanie.</li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Konsola</h2></div>
+          <pre id="log" class="log">-</pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="statusbar">
+      <span id="status" class="status-ok">Gotowy.</span>
+    </footer>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

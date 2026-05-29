@@ -1,0 +1,44 @@
+{
+  "name": "hsi-encoder-electron",
+  "version": "1.0.0",
+  "description": "Desktopowa nakładka uruchamiająca pipeline Pythona dla kostek hiperspektralnych BSQ .HSI.",
+  "main": "main.js",
+  "author": "HSI Encoder",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^41.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.example.hsiencoder",
+    "productName": "HSI Encoder",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "renderer.js",
+      "styles.css",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/python",
+        "to": "python",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": ["portable", "nsis"]
+    },
+    "mac": {
+      "target": ["dmg"]
+    },
+    "linux": {
+      "target": ["AppImage"]
+    }
+  }
+}

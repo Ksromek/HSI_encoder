@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.14 (HSI_encode)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.14 (HSI_encode)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.14 (HSI_encoder)" project-jdk-type="Python SDK" />
 </project>

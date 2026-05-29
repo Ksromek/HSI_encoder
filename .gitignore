@@ -1,0 +1,19 @@
+
+.venv/
+
+build/
+dist/
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+electron-hsi/node_modules/
+
+electron-hsi/dist/
+
+.idea/
+
+# Pliki systemowe
+.DS_Store
+Thumbs.db

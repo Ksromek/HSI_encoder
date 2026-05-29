@@ -1,4 +1,4 @@
-file_path = r"D:\Bazy\Nowe_dane\01.HSI"
+file_path = r"C:\Users\g_sie\Desktop\DataBase\HSI\01.HSI"
 
 bands = 151
 height = 750
